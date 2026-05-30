@@ -1,0 +1,41 @@
+{% extends 'base.html' %}
+
+{% block content %}
+
+<div class="dashboard-shell">
+    <aside class="dashboard-card dashboard-sidebar">
+        <div class="mb-4">
+            <p class="text-warning fw-bold mb-1">Owner Dashboard</p>
+            <h4 class="fw-bold mb-0">{{ restaurant.name }}</h4>
+        </div>
+
+        <a class="dashboard-nav-link {% if active_nav == 'overview' %}active{% endif %}"
+           href="{% url 'dashboard' %}">Overview</a>
+        <a class="dashboard-nav-link {% if active_nav == 'venues' %}active{% endif %}"
+           href="{% url 'dashboard_venues' %}">Venues</a>
+        <a class="dashboard-nav-link {% if active_nav == 'orders' %}active{% endif %}"
+           href="{% url 'dashboard_orders' %}">Orders</a>
+        <a class="dashboard-nav-link {% if active_nav == 'menu_items' %}active{% endif %}"
+           href="{% url 'dashboard_menu_items' %}">Menu Items</a>
+        <a class="dashboard-nav-link {% if active_nav == 'categories' %}active{% endif %}"
+           href="{% url 'dashboard_categories' %}">Categories</a>
+        <a class="dashboard-nav-link {% if active_nav == 'reviews' %}active{% endif %}"
+           href="{% url 'dashboard_reviews' %}">Reviews</a>
+        <a class="dashboard-nav-link {% if active_nav == 'favorites' %}active{% endif %}"
+           href="{% url 'dashboard_favorites' %}">Favorites</a>
+        <a class="dashboard-nav-link {% if active_nav == 'settings' %}active{% endif %}"
+           href="{% url 'dashboard_settings' %}">Settings</a>
+    </aside>
+
+    <main>
+        {% block dashboard_content %}
+        {% endblock %}
+    </main>
+</div>
+
+{% endblock %}
+
+{% block scripts %}
+    {% block dashboard_scripts %}
+    {% endblock %}
+{% endblock %}

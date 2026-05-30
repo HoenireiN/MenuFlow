@@ -1,0 +1,79 @@
+{% extends 'dashboard/base_dashboard.html' %}
+
+{% block dashboard_content %}
+
+<div class="dashboard-card p-4 p-md-5">
+    <p class="text-warning fw-bold mb-2">Venue Settings</p>
+    <h1 class="fw-bold">All Venues</h1>
+    <p class="text-secondary">Manage opening state and core information for every current and future restaurant venue.</p>
+
+    <div class="row g-4 mt-2">
+        {% for setting in venue_settings %}
+            <div class="col-lg-6">
+                <div class="dashboard-card p-4 border border-secondary h-100">
+                    <div class="d-flex justify-content-between align-items-start flex-wrap gap-3 mb-3">
+                        <div>
+                            <p class="text-warning fw-bold mb-1">{{ setting.venue.get_venue_type_display }}</p>
+                            <h3 class="fw-bold mb-1">{{ setting.venue.name }}</h3>
+                            <p class="text-secondary mb-0">{{ setting.venue.opening_hours }}</p>
+                        </div>
+
+                        <div class="text-end">
+                            <div class="badge {% if setting.is_open_now %}bg-success{% else %}bg-danger{% endif %} mb-2">
+                                {% if setting.is_open_now %}Open now{% else %}Closed now{% endif %}
+                            </div>
+                            <button type="button"
+                                    class="availability-toggle {% if setting.venue.is_manually_open %}is-available{% else %}is-sold-out{% endif %}"
+                                    data-restaurant-toggle-url="{% url 'toggle_restaurant_open' %}"
+                                    data-venue-id="{{ setting.venue.id }}">
+                                {% if setting.venue.is_manually_open %}Accepting{% else %}Paused{% endif %}
+                            </button>
+                        </div>
+                    </div>
+
+                    <div class="row g-3">
+                        <div class="col-md-6"><div class="p-3 rounded-4 border border-secondary"><span class="text-secondary small">Email</span><div>{{ setting.venue.email }}</div></div></div>
+                        <div class="col-md-6"><div class="p-3 rounded-4 border border-secondary"><span class="text-secondary small">Phone</span><div>{{ setting.venue.phone }}</div></div></div>
+                        <div class="col-12"><div class="p-3 rounded-4 border border-secondary"><span class="text-secondary small">Address</span><div>{{ setting.venue.address }}</div></div></div>
+                    </div>
+
+                    <a href="{% url 'venue_edit' setting.venue.id %}"
+                       class="btn btn-outline-warning rounded-pill px-4 mt-3">Edit Venue</a>
+                </div>
+            </div>
+        {% endfor %}
+    </div>
+</div>
+
+{% endblock %}
+
+{% block dashboard_scripts %}
+
+<script>
+    const restaurantToggles = document.querySelectorAll('[data-restaurant-toggle-url]');
+
+    restaurantToggles.forEach((restaurantToggle) => {
+        restaurantToggle.addEventListener('click', async () => {
+            const formData = new FormData();
+            formData.append('venue_id', restaurantToggle.dataset.venueId);
+
+            const response = await fetch(restaurantToggle.dataset.restaurantToggleUrl, {
+                method: 'POST',
+                headers: {
+                    'X-CSRFToken': getCookie('csrftoken'),
+                    'X-Requested-With': 'XMLHttpRequest'
+                },
+                body: formData
+            });
+
+            if (!response.ok) return;
+
+            const data = await response.json();
+            restaurantToggle.textContent = data.is_open ? 'Accepting' : 'Paused';
+            restaurantToggle.classList.toggle('is-available', data.is_open);
+            restaurantToggle.classList.toggle('is-sold-out', !data.is_open);
+        });
+    });
+</script>
+
+{% endblock %}

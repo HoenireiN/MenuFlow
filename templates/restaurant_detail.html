@@ -1,0 +1,639 @@
+{% extends 'base.html' %}
+
+{% block content %}
+
+<div class="menu-hero mb-5">
+
+    <h1 class="fw-bold display-4">
+        {% if is_turkish %}
+            {{ restaurant.name_tr|default:restaurant.name }}
+        {% else %}
+            {{ restaurant.name_en|default:restaurant.name }}
+        {% endif %}
+    </h1>
+
+    <p class="text-secondary fs-5">
+        {% if is_turkish %}
+            {{ restaurant.description_tr|default:restaurant.description }}
+        {% else %}
+            {{ restaurant.description_en|default:restaurant.description }}
+        {% endif %}
+    </p>
+
+    <div class="d-flex flex-wrap gap-2 mt-4">
+        {% if is_open_now == True %}
+            <span class="badge bg-success rounded-pill px-3 py-2">{% if is_turkish %}Şu an açık{% else %}Open now{% endif %}</span>
+        {% elif is_open_now == False %}
+            <span class="badge bg-danger rounded-pill px-3 py-2">{% if is_turkish %}Şu an kapalı{% else %}Closed now{% endif %}</span>
+        {% else %}
+            <span class="badge bg-secondary rounded-pill px-3 py-2">{% if is_turkish %}Saat bilgisi yakında{% else %}Hours coming soon{% endif %}</span>
+        {% endif %}
+
+        <span class="badge bg-dark border border-secondary rounded-pill px-3 py-2">
+            {{ restaurant.opening_hours }}
+        </span>
+
+        <span class="badge bg-dark border border-secondary rounded-pill px-3 py-2">
+            {{ restaurant.get_venue_type_display }}
+        </span>
+
+        {% if average_rating %}
+            <span class="badge bg-warning text-dark rounded-pill px-3 py-2">
+                ★ {{ average_rating|floatformat:1 }} / 5 ({{ review_count }})
+            </span>
+        {% endif %}
+    </div>
+
+    <div class="dashboard-card p-3 mt-4">
+        <div class="d-flex justify-content-between align-items-center flex-wrap gap-3">
+            <div>
+                <div class="text-warning fw-bold small">{% if is_turkish %}Masa / Oda Servisi{% else %}Table / Room Service{% endif %}</div>
+                <div class="text-secondary small">
+                    {% if table_number %}
+                        {% if is_turkish %}Seçili masa:{% else %}Selected table:{% endif %} {{ table_number }}
+                    {% else %}
+                        {% if is_turkish %}Masada oturuyorsanız masa numaranızı ekleyin. Oda hesabınıza yazdırmak için giriş yapın.{% else %}Add a table number if seated. Sign in to charge orders to your room account.{% endif %}
+                    {% endif %}
+                </div>
+            </div>
+            <form method="POST" action="{% url 'set_table' restaurant.slug %}" class="d-flex gap-2 flex-wrap">
+                {% csrf_token %}
+                <input type="number" name="table_number" min="1" max="{{ restaurant.table_count }}" value="{{ table_number }}" placeholder="Table" class="form-control bg-dark text-white border-secondary" style="width:110px;">
+                <button type="submit" class="btn btn-outline-warning rounded-pill px-4 fw-bold">{% if is_turkish %}Kaydet{% else %}Save{% endif %}</button>
+                <a href="{% url 'cart_page' restaurant.slug %}" class="btn btn-warning rounded-pill px-4 fw-bold">{% if is_turkish %}Sepet{% else %}Cart{% endif %}</a>
+            </form>
+        </div>
+    </div>
+
+</div>
+
+<form method="GET"
+      class="dashboard-card p-3 p-md-4 mb-5">
+    <div class="row g-3 align-items-end">
+        <div class="col-md-6 col-lg-4">
+            <label class="form-label text-secondary small">{% if is_turkish %}Diyet / Alerjen{% else %}Diet / Allergen{% endif %}</label>
+            <select name="allergen"
+                    class="form-select bg-dark text-white border-secondary"
+                    data-auto-submit-filter>
+                <option value="">{% if is_turkish %}Tümü{% else %}All{% endif %}</option>
+                {% for allergen in allergens %}
+                    <option value="{{ allergen.name }}"
+                            {% if selected_allergen == allergen.name %}selected{% endif %}>
+                        {% if is_turkish %}
+                            {{ allergen.name_tr }}
+                        {% else %}
+                            {{ allergen.name }}
+                        {% endif %}
+                    </option>
+                {% endfor %}
+            </select>
+        </div>
+    </div>
+</form>
+
+{% if selected_allergen %}
+
+<div class="mb-4 text-secondary small">
+    {% if is_turkish %}Etiket filtresi:{% else %}Showing items tagged with{% endif %}
+    <span class="text-warning fw-bold">
+        {{ selected_allergen }}
+    </span>
+</div>
+
+{% endif %}
+
+<div class="mb-5">
+    <div class="d-flex justify-content-between align-items-end flex-wrap gap-3 mb-3">
+        <div>
+            <span class="category-kicker">{% if is_turkish %}Öne Çıkanlar{% else %}Featured Menus{% endif %}</span>
+            <h2 class="fw-bold mb-0">{% if is_turkish %}Şef Önerileri{% else %}Chef Recommendations{% endif %}</h2>
+        </div>
+        <span class="text-secondary small">{% if is_turkish %}Premium seçimler{% else %}Premium picks{% endif %}</span>
+    </div>
+
+    <div class="featured-rail">
+        {% for item in chef_items %}
+            <div class="menu-card menu-card--interactive featured-card"
+                 data-item-detail-url="{% url 'menu_item_detail_api' item.id %}">
+                <div class="image-wrapper">
+                    <img src="{{ item.image.url }}"
+                         class="food-image"
+                         alt="{{ item.title }}">
+                </div>
+                <div class="mt-3">
+                    <span class="badge bg-warning text-dark rounded-pill px-3 py-2 mb-2">
+                        {% if is_turkish %}Şef Önerisi{% else %}Chef Pick{% endif %}
+                    </span>
+                    <h4 class="fw-bold">
+                        {% if is_turkish %}{{ item.title_tr|default:item.title }}{% else %}{{ item.title_en|default:item.title }}{% endif %}
+                    </h4>
+                    <div class="d-flex justify-content-between align-items-center price-panel">
+                        <strong class="text-warning fs-4">₺{{ item.price }}</strong>
+                        <span class="text-secondary small">{{ item.prep_time }} {% if is_turkish %}dk{% else %}min{% endif %}</span>
+                    </div>
+                </div>
+            </div>
+        {% endfor %}
+    </div>
+</div>
+
+<div class="mb-5">
+    <div class="d-flex justify-content-between align-items-end flex-wrap gap-3 mb-3">
+        <div>
+            <span class="category-kicker">{% if is_turkish %}Popüler{% else %}Popular{% endif %}</span>
+            <h2 class="fw-bold mb-0">{% if is_turkish %}En Çok Sevilenler{% else %}Most Popular{% endif %}</h2>
+        </div>
+    </div>
+
+    <div class="featured-rail">
+        {% for item in popular_items %}
+            <div class="menu-card menu-card--interactive featured-card"
+                 data-item-detail-url="{% url 'menu_item_detail_api' item.id %}">
+                <div class="image-wrapper">
+                    <img src="{{ item.image.url }}"
+                         class="food-image"
+                         alt="{{ item.title }}">
+                </div>
+                <div class="mt-3">
+                    <span class="badge bg-danger rounded-pill px-3 py-2 mb-2">
+                        {% if is_turkish %}Çok Popüler{% else %}Most Popular{% endif %}
+                    </span>
+                    <h4 class="fw-bold">
+                        {% if is_turkish %}{{ item.title_tr|default:item.title }}{% else %}{{ item.title_en|default:item.title }}{% endif %}
+                    </h4>
+                    <div class="d-flex justify-content-between align-items-center price-panel">
+                        <strong class="text-warning fs-4">₺{{ item.price }}</strong>
+                        <span class="text-secondary small">
+                            {% if is_turkish %}{{ item.category.name_tr|default:item.category.name }}{% else %}{{ item.category.name_en|default:item.category.name }}{% endif %}
+                        </span>
+                    </div>
+                </div>
+            </div>
+        {% endfor %}
+    </div>
+</div>
+
+<div class="mb-5">
+    <div class="d-flex justify-content-between align-items-end flex-wrap gap-3 mb-3">
+        <div>
+            <span class="category-kicker">{% if is_turkish %}Yeni{% else %}New{% endif %}</span>
+            <h2 class="fw-bold mb-0">{% if is_turkish %}Yeni Lezzetler{% else %}New Items{% endif %}</h2>
+        </div>
+    </div>
+
+    <div class="featured-rail">
+        {% for item in new_items %}
+            <div class="menu-card menu-card--interactive featured-card"
+                 data-item-detail-url="{% url 'menu_item_detail_api' item.id %}">
+                <div class="image-wrapper">
+                    <img src="{{ item.image.url }}"
+                         class="food-image"
+                         alt="{{ item.title }}">
+                </div>
+                <div class="mt-3">
+                    <span class="badge bg-info text-dark rounded-pill px-3 py-2 mb-2">
+                        {% if is_turkish %}Yeni{% else %}New{% endif %}
+                    </span>
+                    <h4 class="fw-bold">
+                        {% if is_turkish %}{{ item.title_tr|default:item.title }}{% else %}{{ item.title_en|default:item.title }}{% endif %}
+                    </h4>
+                    <div class="d-flex justify-content-between align-items-center price-panel">
+                        <strong class="text-warning fs-4">₺{{ item.price }}</strong>
+                        <span class="text-secondary small">{{ item.prep_time }} {% if is_turkish %}dk{% else %}min{% endif %}</span>
+                    </div>
+                </div>
+            </div>
+        {% endfor %}
+    </div>
+</div>
+
+<div class="category-nav-wrap">
+    <nav class="category-nav" aria-label="Menu categories">
+
+    {% for category in categories %}
+
+        <a href="#category-{{ category.id }}"
+           class="category-nav-link"
+           data-category-nav-link>
+
+            {% if is_turkish %}
+                {{ category.name_tr|default:category.name }}
+            {% else %}
+                {{ category.name_en|default:category.name }}
+            {% endif %}
+
+        </a>
+
+    {% endfor %}
+
+    </nav>
+</div>
+
+{% for category in categories %}
+
+<section id="category-{{ category.id }}"
+         class="category-section"
+         data-category-section>
+
+    <div class="category-heading mb-4">
+
+        <span class="category-kicker">
+            {% if is_turkish %}Bölüm {{ forloop.counter }}{% else %}Section {{ forloop.counter }}{% endif %}
+        </span>
+
+        <h2 class="fw-bold display-6 mb-2">
+            {% if is_turkish %}
+                {{ category.name_tr|default:category.name }}
+            {% else %}
+                {{ category.name_en|default:category.name }}
+            {% endif %}
+        </h2>
+
+        <p class="text-secondary fs-5 mb-0">
+            {% if is_turkish %}
+                {{ category.description_tr|default:category.description }}
+            {% else %}
+                {{ category.description_en|default:category.description }}
+            {% endif %}
+        </p>
+
+    </div>
+
+    <div class="row">
+
+        {% for item in items %}
+
+            {% if item.category.id == category.id %}
+
+            <div class="col-lg-4 col-md-6 mb-4">
+
+                <div class="menu-card menu-card--interactive"
+                     data-item-detail-url="{% url 'menu_item_detail_api' item.id %}">
+
+                    <div class="image-wrapper">
+                        <img src="{{ item.image.url }}"
+                             class="food-image"
+                             alt="{{ item.title }}">
+                    </div>
+
+                    <div class="mt-3">
+
+                        <div class="d-flex justify-content-between align-items-start gap-3">
+
+                            <h3 class="fw-bold fs-4">
+                                {% if is_turkish %}
+                                    {{ item.title_tr|default:item.title }}
+                                {% else %}
+                                    {{ item.title_en|default:item.title }}
+                                {% endif %}
+                            </h3>
+
+                            <div class="d-flex align-items-center gap-2">
+
+                                {% if user.is_authenticated %}
+
+                                    <button type="button"
+                                            class="favorite-button {% if item.id in favorite_item_ids %}is-active{% endif %}"
+                                            data-favorite-url="{% url 'toggle_favorite' item.id %}"
+                                            aria-label="Toggle favorite"
+                                            data-card-action>
+                                        ♥
+                                    </button>
+
+                                {% endif %}
+
+                                {% if item.is_featured %}
+
+                                <span class="badge bg-warning text-dark px-3 py-2">
+                                    {% if is_turkish %}Öne Çıkan{% else %}Featured{% endif %}
+                                </span>
+
+                                {% endif %}
+
+                            </div>
+
+                        </div>
+
+                        <p class="text-secondary mt-2">
+                            {% if is_turkish %}
+                                {{ item.description_tr|default:item.description }}
+                            {% else %}
+                                {{ item.description_en|default:item.description }}
+                            {% endif %}
+                        </p>
+
+                        {% if item.allergens.all %}
+
+                        <div class="allergen-list">
+
+                            {% for allergen in item.allergens.all %}
+
+                                <span class="allergen-badge {{ allergen.badge_class }}">
+                                    {% if is_turkish %}
+                                        {{ allergen.name_tr }}
+                                    {% else %}
+                                        {{ allergen.name }}
+                                    {% endif %}
+                                </span>
+
+                            {% endfor %}
+
+                        </div>
+
+                        {% endif %}
+
+                        <div class="d-flex justify-content-between align-items-center mt-4 price-panel">
+
+                            <h3 class="text-warning fw-bold">
+                                ₺{{ item.price }}
+                            </h3>
+
+                            <div class="text-secondary small">
+
+                                {{ item.prep_time }} {% if is_turkish %}dk{% else %}min{% endif %}
+
+                            </div>
+
+                        </div>
+
+                        {% if item.is_available and is_open_now %}
+                            <form method="POST" action="{% url 'add_to_cart' restaurant.slug item.id %}" class="mt-3" data-card-action>
+                                {% csrf_token %}
+                                <button type="submit" class="btn btn-warning w-100 rounded-pill fw-bold">
+                                    {% if is_turkish %}Sepete Ekle{% else %}Add to Cart{% endif %}
+                                </button>
+                            </form>
+                        {% endif %}
+
+                    </div>
+
+                </div>
+
+            </div>
+
+            {% endif %}
+
+        {% endfor %}
+
+    </div>
+
+</section>
+
+{% endfor %}
+
+<section class="category-section">
+    <div class="category-heading mb-4">
+        <span class="category-kicker">{% if is_turkish %}Misafir yorumları{% else %}Guest Reviews{% endif %}</span>
+        <h2 class="fw-bold display-6 mb-2">{% if is_turkish %}Deneyimini Paylaş{% else %}Share Your Experience{% endif %}</h2>
+        <p class="text-secondary fs-5 mb-0">
+            {% if is_turkish %}Restoranı veya sevdiğin bir ürünü puanla.{% else %}Rate the restaurant or a menu item you enjoyed.{% endif %}
+        </p>
+    </div>
+
+    <div class="row g-4">
+        <div class="col-lg-5">
+            <div class="dashboard-card p-4">
+                <form method="POST" action="{% url 'submit_review' restaurant.slug %}">
+                    {% csrf_token %}
+                    <div class="mb-3">
+                        <label class="form-label text-secondary small">{% if is_turkish %}Adınız{% else %}Your name{% endif %}</label>
+                        <input type="text" name="customer_name" class="form-control bg-dark text-white border-secondary" value="{% if user.is_authenticated %}{{ user.username }}{% endif %}">
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label text-secondary small">{% if is_turkish %}Ürün{% else %}Menu item{% endif %}</label>
+                        {{ review_form.menu_item }}
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label text-secondary small">{% if is_turkish %}Puan{% else %}Rating{% endif %}</label>
+                        <input type="number" name="rating" min="1" max="5" value="5" class="form-control bg-dark text-white border-secondary">
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label text-secondary small">{% if is_turkish %}Yorum{% else %}Comment{% endif %}</label>
+                        <textarea name="comment" rows="4" class="form-control bg-dark text-white border-secondary"></textarea>
+                    </div>
+                    <button type="submit" class="btn btn-warning rounded-pill px-4 fw-bold">{% if is_turkish %}Yorumu Gönder{% else %}Submit Review{% endif %}</button>
+                </form>
+            </div>
+        </div>
+
+        <div class="col-lg-7">
+            <div class="dashboard-card p-4 h-100">
+                <div class="d-flex justify-content-between align-items-center mb-3">
+                    <h3 class="fw-bold mb-0">{% if is_turkish %}Son Yorumlar{% else %}Latest Reviews{% endif %}</h3>
+                    {% if average_rating %}<span class="text-warning fw-bold">★ {{ average_rating|floatformat:1 }}</span>{% endif %}
+                </div>
+                {% for review in reviews %}
+                    <div class="py-3 border-bottom border-secondary">
+                        <div class="d-flex justify-content-between gap-3 flex-wrap">
+                            <strong>{{ review.customer_name }}</strong>
+                            <span class="text-warning">{{ review.rating }}/5</span>
+                        </div>
+                        <p class="text-secondary mb-1">{{ review.comment|default:'No comment' }}</p>
+                        {% if review.menu_item %}<span class="small text-secondary">{{ review.menu_item.title }}</span>{% endif %}
+                    </div>
+                {% empty %}
+                    <p class="text-secondary mb-0">{% if is_turkish %}Henüz yorum yok.{% else %}No reviews yet.{% endif %}</p>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+</section>
+
+<div class="food-modal-overlay"
+     data-food-modal>
+    <div class="food-modal position-relative">
+        <button type="button"
+                class="modal-close-button"
+                data-modal-close>
+            ×
+        </button>
+
+        <div class="p-3 p-md-4">
+            <img src=""
+                 alt=""
+                 class="food-modal-image mb-4"
+                 data-modal-image>
+
+            <div class="d-flex justify-content-between align-items-start gap-3 flex-wrap mb-3">
+                <div>
+                    <div class="text-warning fw-bold mb-2" data-modal-category></div>
+                    <h2 class="fw-bold display-6 mb-0" data-modal-title></h2>
+                </div>
+
+                <div class="text-end">
+                    <div class="text-warning fw-bold fs-2" data-modal-price></div>
+                    <div class="small text-secondary" data-modal-status></div>
+                </div>
+            </div>
+
+            <p class="text-secondary fs-5" data-modal-description></p>
+
+            <div class="d-flex flex-wrap gap-2 mb-4" data-modal-meta></div>
+
+            <div class="mb-4">
+                <h5 class="fw-bold mb-3">
+                    {% if is_turkish %}Alerjen ve Diyet Etiketleri{% else %}Allergen & Dietary Tags{% endif %}
+                </h5>
+                <div class="allergen-list mt-0" data-modal-allergens></div>
+            </div>
+
+            <div>
+                <h5 class="fw-bold mb-3">
+                    {% if is_turkish %}İçindekiler{% else %}Ingredients{% endif %}
+                </h5>
+                <div class="d-flex flex-wrap gap-2" data-modal-ingredients></div>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% endblock %}
+
+{% block scripts %}
+
+<script>
+    document.querySelectorAll('[data-favorite-url]').forEach((button) => {
+        button.addEventListener('click', async (event) => {
+            event.stopPropagation();
+
+            const response = await fetch(button.dataset.favoriteUrl, {
+                method: 'POST',
+                headers: {
+                    'X-CSRFToken': getCookie('csrftoken'),
+                    'X-Requested-With': 'XMLHttpRequest'
+                }
+            });
+
+            if (!response.ok) return;
+
+            const data = await response.json();
+            button.classList.toggle('is-active', data.favorited);
+        });
+    });
+
+    document.querySelectorAll('[data-auto-submit-filter]').forEach((select) => {
+        select.addEventListener('change', () => {
+            if (!select.value) {
+                window.location.href = '{% url 'restaurant_detail' restaurant.slug %}';
+                return;
+            }
+
+            select.form.submit();
+        });
+    });
+
+    const modalOverlay = document.querySelector('[data-food-modal]');
+    const modalImage = document.querySelector('[data-modal-image]');
+    const modalCategory = document.querySelector('[data-modal-category]');
+    const modalTitle = document.querySelector('[data-modal-title]');
+    const modalPrice = document.querySelector('[data-modal-price]');
+    const modalStatus = document.querySelector('[data-modal-status]');
+    const modalDescription = document.querySelector('[data-modal-description]');
+    const modalMeta = document.querySelector('[data-modal-meta]');
+    const modalAllergens = document.querySelector('[data-modal-allergens]');
+    const modalIngredients = document.querySelector('[data-modal-ingredients]');
+
+    function openModal() {
+        modalOverlay.classList.add('is-open');
+        document.body.classList.add('modal-open');
+    }
+
+    function closeModal() {
+        modalOverlay.classList.remove('is-open');
+        document.body.classList.remove('modal-open');
+    }
+
+    document.querySelectorAll('[data-modal-close]').forEach((button) => {
+        button.addEventListener('click', closeModal);
+    });
+
+    modalOverlay.addEventListener('click', (event) => {
+        if (event.target === modalOverlay) closeModal();
+    });
+
+    document.addEventListener('keydown', (event) => {
+        if (event.key === 'Escape') closeModal();
+    });
+
+    document.querySelectorAll('[data-item-detail-url]').forEach((card) => {
+        card.addEventListener('click', async (event) => {
+            if (event.target.closest('[data-card-action]')) return;
+
+            const response = await fetch(card.dataset.itemDetailUrl, {
+                headers: {
+                    'X-Requested-With': 'XMLHttpRequest'
+                }
+            });
+
+            if (!response.ok) return;
+
+            const data = await response.json();
+
+            modalImage.classList.remove('is-portrait', 'is-landscape', 'is-contain');
+            modalImage.src = data.image;
+            modalImage.onload = () => classifyMenuImage(modalImage);
+            modalCategory.textContent = data.category;
+            modalTitle.textContent = data.title;
+            modalPrice.textContent = `₺${data.price}`;
+            modalStatus.textContent = data.is_available
+                ? '{% if is_turkish %}Mevcut{% else %}Available{% endif %}'
+                : '{% if is_turkish %}Tükendi{% else %}Sold Out{% endif %}';
+            modalDescription.textContent = data.description;
+
+            modalMeta.innerHTML = '';
+            const metaItems = [
+                `${data.prep_time || '-'} {% if is_turkish %}dk hazırlık{% else %}min prep{% endif %}`,
+                `${data.calories || '-'} kcal`,
+            ];
+
+            if (data.is_featured) {
+                metaItems.push('{% if is_turkish %}Şef Önerisi{% else %}Chef Recommendation{% endif %}');
+            }
+
+            metaItems.forEach((label) => {
+                const badge = document.createElement('span');
+                badge.className = 'ingredient-chip';
+                badge.textContent = label;
+                modalMeta.appendChild(badge);
+            });
+
+            modalAllergens.innerHTML = '';
+            data.allergens.forEach((allergen) => {
+                const badge = document.createElement('span');
+                badge.className = `allergen-badge ${allergen.class}`;
+                badge.textContent = allergen.name;
+                modalAllergens.appendChild(badge);
+            });
+
+            modalIngredients.innerHTML = '';
+            data.ingredients.forEach((ingredient) => {
+                const chip = document.createElement('span');
+                chip.className = 'ingredient-chip';
+                chip.textContent = ingredient;
+                modalIngredients.appendChild(chip);
+            });
+
+            openModal();
+        });
+    });
+
+    const navLinks = [...document.querySelectorAll('[data-category-nav-link]')];
+    const sections = [...document.querySelectorAll('[data-category-section]')];
+
+    const sectionObserver = new IntersectionObserver((entries) => {
+        entries.forEach((entry) => {
+            if (!entry.isIntersecting) return;
+
+            navLinks.forEach((link) => {
+                link.classList.toggle('active', link.getAttribute('href') === `#${entry.target.id}`);
+            });
+        });
+    }, {
+        rootMargin: '-35% 0px -55% 0px',
+        threshold: 0
+    });
+
+    sections.forEach((section) => sectionObserver.observe(section));
+</script>
+
+{% endblock %}

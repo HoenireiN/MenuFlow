@@ -1,0 +1,46 @@
+{% extends 'dashboard/base_dashboard.html' %}
+
+{% block dashboard_content %}
+
+<div class="mb-4">
+    <h1 class="fw-bold">Reviews</h1>
+    <p class="text-secondary mb-0">Customer feedback and menu item reviews across all venues.</p>
+</div>
+
+<form method="GET" class="dashboard-card p-3 p-md-4 mb-4">
+    <div class="row g-3 align-items-end">
+        <div class="col-md-4">
+            <label class="form-label text-secondary small">Venue</label>
+            <select name="venue" class="form-select bg-dark text-white border-secondary">
+                <option value="">All venues</option>
+                {% for venue in venues %}
+                    <option value="{{ venue.id }}" {% if filters.venue == venue.id|stringformat:'s' %}selected{% endif %}>{{ venue.name }}</option>
+                {% endfor %}
+            </select>
+        </div>
+        <div class="col-md-8 d-flex gap-2">
+            <button type="submit" class="btn btn-warning rounded-pill px-4 fw-bold">Apply</button>
+            <a href="{% url 'dashboard_reviews' %}" class="btn btn-outline-secondary rounded-pill px-4">Reset</a>
+        </div>
+    </div>
+</form>
+
+<div class="dashboard-card p-4">
+    {% for review in reviews %}
+        <div class="py-3 border-bottom border-secondary">
+            <div class="d-flex justify-content-between flex-wrap gap-2">
+                <strong>{{ review.customer_name }}</strong>
+                <span class="text-warning">{{ review.rating }}/5</span>
+            </div>
+            <p class="text-secondary mb-1">{{ review.comment|default:'No comment' }}</p>
+            <span class="small text-warning">{{ review.restaurant.name }}</span>
+            {% if review.menu_item %}
+                <span class="small text-secondary"> / {{ review.menu_item.title }}</span>
+            {% endif %}
+        </div>
+    {% empty %}
+        <p class="text-secondary mb-0">No reviews yet.</p>
+    {% endfor %}
+</div>
+
+{% endblock %}

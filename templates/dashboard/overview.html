@@ -1,0 +1,183 @@
+{% extends 'dashboard/base_dashboard.html' %}
+
+{% block dashboard_content %}
+
+<div class="d-flex justify-content-between align-items-start flex-wrap gap-3 mb-4">
+    <div>
+        <p class="text-warning fw-bold mb-2">Analytics</p>
+        <h1 class="fw-bold mb-1">Dashboard Overview</h1>
+        <p class="text-secondary mb-0">Track menu performance across all current and future venues.</p>
+    </div>
+
+    <a href="{% url 'menu_item_create' %}"
+       class="btn btn-warning rounded-pill px-4 fw-bold">Add Menu Item</a>
+</div>
+
+<div class="row g-4 mb-5">
+    <div class="col-md-4"><div class="dashboard-card p-4"><p class="text-secondary mb-1">Total Menu Items</p><h2 class="fw-bold mb-0">{{ total_menu_items }}</h2></div></div>
+    <div class="col-md-4"><div class="dashboard-card p-4"><p class="text-secondary mb-1">Available Items</p><h2 class="fw-bold mb-0">{{ available_items }}</h2></div></div>
+    <div class="col-md-4"><div class="dashboard-card p-4"><p class="text-secondary mb-1">Featured Items</p><h2 class="fw-bold mb-0">{{ featured_items }}</h2></div></div>
+    <div class="col-md-4"><div class="dashboard-card p-4"><p class="text-secondary mb-1">Categories</p><h2 class="fw-bold mb-0">{{ total_categories }}</h2></div></div>
+    <div class="col-md-4"><div class="dashboard-card p-4"><p class="text-secondary mb-1">Reviews</p><h2 class="fw-bold mb-0">{{ total_reviews }}</h2></div></div>
+    <div class="col-md-4"><div class="dashboard-card p-4"><p class="text-secondary mb-1">Favorites</p><h2 class="fw-bold mb-0">{{ total_favorites }}</h2></div></div>
+    <div class="col-md-4"><div class="dashboard-card p-4"><p class="text-secondary mb-1">Average Price</p><h2 class="fw-bold mb-0">₺{{ average_price|floatformat:0 }}</h2></div></div>
+    <div class="col-md-4"><div class="dashboard-card p-4"><p class="text-secondary mb-1">Average Rating</p><h2 class="fw-bold mb-0">★ {{ average_rating|floatformat:1 }}</h2></div></div>
+    <div class="col-md-4"><div class="dashboard-card p-4"><p class="text-secondary mb-1">Custom Images</p><h2 class="fw-bold mb-0">{{ custom_image_count }}/{{ total_menu_items }}</h2></div></div>
+</div>
+
+<div class="row g-4 mb-5">
+    <div class="col-lg-5">
+        <div class="dashboard-card p-4 h-100">
+            <h3 class="fw-bold mb-3">Venue QR Menus</h3>
+            <p class="text-secondary">Use venue-specific QR codes on tables, windows or printed menus.</p>
+            <div class="row g-3">
+                {% for stat in venue_stats %}
+                    <div class="col-md-6 col-lg-12">
+                        <div class="p-3 rounded-4 border border-secondary">
+                            <div class="d-flex gap-3 align-items-center">
+                                <div class="p-2 rounded-3 bg-white flex-shrink-0">
+                                    <img src="{{ stat.qr_image_url }}"
+                                         alt="{{ stat.venue.name }} QR code"
+                                         style="width:104px;height:104px;display:block;">
+                                </div>
+                                <div class="min-w-0">
+                                    <strong>{{ stat.venue.name }}</strong>
+                                    <div class="small text-secondary text-break mb-2">{{ stat.qr_url }}</div>
+                                    <a href="{% url 'dashboard_qr_code' %}?venue={{ stat.venue.id }}&download=1"
+                                       class="btn btn-sm btn-warning rounded-pill px-3">Download</a>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+
+    <div class="col-lg-7">
+        <div class="dashboard-card p-4 h-100">
+            <h3 class="fw-bold mb-3">Category Distribution</h3>
+            <div>
+                {% for stat in venue_stats %}
+                    <details class="rounded-4 border border-secondary mb-3" {% if forloop.first %}open{% endif %}>
+                        <summary class="d-flex align-items-center justify-content-between gap-3 p-3" style="cursor:pointer;">
+                            <span>
+                                {{ stat.venue.name }}
+                                <span class="badge bg-warning text-dark ms-3">{{ stat.item_count }} items</span>
+                            </span>
+                            <span class="text-secondary small">expand</span>
+                        </summary>
+                        <div class="pb-2">
+                            {% for category in stat.category_stats %}
+                                <div class="mb-3 px-3">
+                                    <div class="d-flex justify-content-between small mb-1">
+                                        <span>{{ category.name }}</span>
+                                        <span class="text-secondary">{{ category.item_count }}</span>
+                                    </div>
+                                    <div class="progress bg-dark" style="height:10px;">
+                                        <div class="progress-bar bg-warning" style="width: {% widthratio category.item_count stat.item_count 100 %}%"></div>
+                                    </div>
+                                </div>
+                            {% empty %}
+                                <p class="text-secondary mb-0 px-3">No categories yet.</p>
+                            {% endfor %}
+                        </div>
+                    </details>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row g-4 mb-5">
+    <div class="col-12">
+        <div class="dashboard-card p-4 h-100">
+            <h3 class="fw-bold mb-3">Venue Status</h3>
+            <div class="row g-3">
+                {% for stat in venue_stats %}
+                    <div class="col-md-4">
+                        <div class="p-3 rounded-4 border border-secondary h-100">
+                            <div class="d-flex justify-content-between gap-2 mb-2">
+                                <strong>{{ stat.venue.name }}</strong>
+                                <span class="badge {% if stat.is_open_now %}bg-success{% else %}bg-danger{% endif %}">{% if stat.is_open_now %}Open{% else %}Closed{% endif %}</span>
+                            </div>
+                            <div class="text-secondary small">{{ stat.venue.opening_hours }}</div>
+                            <div class="small mt-2">{{ stat.item_count }} items · {{ stat.review_count }} reviews · ★ {{ stat.average_rating|floatformat:1 }}</div>
+                        </div>
+                    </div>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+
+    <div class="col-lg-6">
+        <div class="dashboard-card p-4 h-100">
+            <h3 class="fw-bold mb-3">Top Favorited Items</h3>
+            {% for item in top_favorite_items %}
+                <div class="d-flex justify-content-between align-items-center py-2 border-bottom border-secondary">
+                    <div>
+                        <strong>{{ item.title }}</strong>
+                        <div class="text-secondary small">{{ item.restaurant.name }} / {{ item.category.name }}</div>
+                    </div>
+                    <span class="text-warning fw-bold">{{ item.favorite_count }}</span>
+                </div>
+            {% empty %}
+                <p class="text-secondary mb-0">No favorites yet.</p>
+            {% endfor %}
+        </div>
+    </div>
+
+    <div class="col-lg-6">
+        <div class="dashboard-card p-4 h-100">
+            <div class="d-flex justify-content-between align-items-center mb-3">
+                <h3 class="fw-bold mb-0">Image Completeness</h3>
+                <span class="badge {% if missing_image_count %}bg-danger{% else %}bg-success{% endif %} rounded-pill px-3 py-2">
+                    {{ missing_image_count }} missing
+                </span>
+            </div>
+            {% for item in missing_image_items|slice:':10' %}
+                <div class="d-flex justify-content-between align-items-center py-2 border-bottom border-secondary">
+                    <div>
+                        <strong>{{ item.title }}</strong>
+                        <div class="text-secondary small">{{ item.restaurant.name }} / {{ item.category.name }}</div>
+                    </div>
+                    <a href="{% url 'menu_item_edit' item.id %}" class="btn btn-sm btn-outline-warning rounded-pill px-3">Fix</a>
+                </div>
+            {% empty %}
+                <p class="text-secondary mb-0">All menu items have custom images.</p>
+            {% endfor %}
+        </div>
+    </div>
+</div>
+
+<div class="dashboard-card p-4">
+    <h3 class="fw-bold mb-4">Recent Menu Items</h3>
+    <div class="table-responsive">
+        <table class="table table-dark table-hover align-middle mb-0">
+            <thead>
+                <tr>
+                    <th>Item</th>
+                    <th>Venue</th>
+                    <th>Category</th>
+                    <th>Price</th>
+                    <th>Status</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for item in recent_items %}
+                    <tr>
+                        <td>{{ item.title }}</td>
+                        <td>{{ item.restaurant.name }}</td>
+                        <td>{{ item.category.name }}</td>
+                        <td>₺{{ item.price }}</td>
+                        <td>{% if item.is_available %}Available{% else %}Sold Out{% endif %}</td>
+                    </tr>
+                {% empty %}
+                    <tr><td colspan="5" class="text-secondary">No menu items yet.</td></tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+{% endblock %}

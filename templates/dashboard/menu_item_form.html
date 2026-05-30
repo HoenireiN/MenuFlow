@@ -1,0 +1,268 @@
+{% extends 'dashboard/base_dashboard.html' %}
+
+{% block dashboard_content %}
+
+<div class="mb-4">
+    <h1 class="fw-bold">{{ page_title }}</h1>
+    <p class="text-secondary mb-0">Use high quality images, bilingual descriptions and accurate dietary tags.</p>
+</div>
+
+<div class="dashboard-card p-4 p-md-5">
+    <form method="POST"
+          enctype="multipart/form-data">
+        {% csrf_token %}
+
+        {% if form.non_field_errors %}
+            <div class="alert alert-danger rounded-4">{{ form.non_field_errors }}</div>
+        {% endif %}
+
+        <div class="mb-5">
+            <div class="form-section-title mb-3">Core Info</div>
+            <div class="dashboard-form-grid">
+                <div>
+                    <label class="form-label text-secondary small">Venue</label>
+                    {{ form.restaurant }}
+                    {{ form.restaurant.errors }}
+                </div>
+                <div>
+                    <label class="form-label text-secondary small">Category</label>
+                    {{ form.category }}
+                    {{ form.category.errors }}
+                </div>
+                <div>
+                    <label class="form-label text-secondary small">Price</label>
+                    {{ form.price }}
+                    {{ form.price.errors }}
+                </div>
+                <div>
+                    <label class="form-label text-secondary small">Title</label>
+                    {{ form.title }}
+                    {{ form.title.errors }}
+                </div>
+                <div>
+                    <label class="form-label text-secondary small">Turkish Title</label>
+                    {{ form.title_tr }}
+                    {{ form.title_tr.errors }}
+                </div>
+                <div>
+                    <label class="form-label text-secondary small">English Title</label>
+                    {{ form.title_en }}
+                    {{ form.title_en.errors }}
+                </div>
+                <div>
+                    <label class="form-label text-secondary small">Image</label>
+                    {{ form.image }}
+                    {{ form.image.errors }}
+                </div>
+            </div>
+        </div>
+
+        <div class="mb-5">
+            <div class="form-section-title mb-3">Descriptions</div>
+            <div class="dashboard-form-grid">
+                <div class="full-span">
+                    <label class="form-label text-secondary small">Default Description</label>
+                    {{ form.description }}
+                    {{ form.description.errors }}
+                </div>
+                <div>
+                    <label class="form-label text-secondary small">Turkish Description</label>
+                    {{ form.description_tr }}
+                    {{ form.description_tr.errors }}
+                </div>
+                <div>
+                    <label class="form-label text-secondary small">English Description</label>
+                    {{ form.description_en }}
+                    {{ form.description_en.errors }}
+                </div>
+            </div>
+        </div>
+
+        <div class="mb-5">
+            <div class="form-section-title mb-3">Menu Metadata</div>
+            <div class="dashboard-form-grid">
+                <div>
+                    <label class="form-label text-secondary small">Calories</label>
+                    {{ form.calories }}
+                    {{ form.calories.errors }}
+                </div>
+                <div>
+                    <label class="form-label text-secondary small">Prep Time</label>
+                    {{ form.prep_time }}
+                    {{ form.prep_time.errors }}
+                </div>
+                <div class="d-flex gap-4 align-items-center flex-wrap">
+                    <label class="d-flex gap-2 align-items-center fw-bold">
+                        {{ form.is_available }} Available
+                    </label>
+                    <label class="d-flex gap-2 align-items-center fw-bold">
+                        {{ form.is_featured }} Featured
+                    </label>
+                </div>
+            </div>
+        </div>
+
+        <div class="mb-5">
+            <div class="d-flex justify-content-between align-items-end gap-3 flex-wrap mb-3">
+                <div>
+                    <div class="form-section-title">Dietary Tags</div>
+                    <p class="text-secondary small mb-0">Select allergens and dietary labels shown on menu cards.</p>
+                </div>
+                <span class="text-secondary small">Compact chip selector</span>
+            </div>
+            <div class="chip-toolbar mb-3">
+                <input type="search"
+                       class="form-control bg-dark text-white border-secondary"
+                       placeholder="Search dietary tags..."
+                       data-chip-search="allergens-grid">
+                <button type="button"
+                        class="btn btn-outline-secondary rounded-pill px-4"
+                        data-clear-chip-search="allergens-grid">
+                    Clear
+                </button>
+            </div>
+            <div class="option-chip-grid">
+                <div id="allergens-grid">
+                {{ form.allergens }}
+                </div>
+            </div>
+            {{ form.allergens.errors }}
+        </div>
+
+        <div class="mb-5">
+            <div class="d-flex justify-content-between align-items-end gap-3 flex-wrap mb-3">
+                <div>
+                    <div class="form-section-title">Ingredients</div>
+                    <p class="text-secondary small mb-0">Scrollable modern selector for large ingredient lists.</p>
+                </div>
+                <span class="text-secondary small">Search or add without leaving the form</span>
+            </div>
+            <div class="chip-toolbar mb-3">
+                <input type="search"
+                       class="form-control bg-dark text-white border-secondary"
+                       placeholder="Search ingredients..."
+                       data-chip-search="ingredients-grid">
+                <button type="button"
+                        class="btn btn-warning rounded-pill px-4 fw-bold"
+                        data-open-ingredient-add>
+                    Add Ingredient
+                </button>
+            </div>
+            <div class="ingredient-add-panel" data-ingredient-add-panel>
+                <input type="text"
+                       class="form-control bg-dark text-white border-secondary"
+                       placeholder="English name"
+                       data-ingredient-name-en>
+                <input type="text"
+                       class="form-control bg-dark text-white border-secondary"
+                       placeholder="Turkish name"
+                       data-ingredient-name-tr>
+                <button type="button"
+                        class="btn btn-outline-warning rounded-pill px-4 fw-bold"
+                        data-save-ingredient-url="{% url 'quick_add_ingredient' %}">
+                    Save & Select
+                </button>
+            </div>
+            <div class="option-chip-grid">
+                <div id="ingredients-grid" data-ingredients-grid>
+                {{ form.ingredients }}
+                </div>
+            </div>
+            {{ form.ingredients.errors }}
+        </div>
+
+        <div class="d-flex gap-2 flex-wrap mt-4">
+            <button type="submit"
+                    class="btn btn-warning rounded-pill px-4 fw-bold">Save</button>
+            <a href="{% url 'dashboard_menu_items' %}"
+               class="btn btn-outline-secondary rounded-pill px-4">Cancel</a>
+        </div>
+    </form>
+</div>
+
+{% endblock %}
+
+{% block dashboard_scripts %}
+
+<script>
+    function getChipItems(grid) {
+        return [...grid.querySelectorAll('li, label')].filter((item) => {
+            return item.querySelector('input[type="checkbox"]') || item.matches('label');
+        });
+    }
+
+    document.querySelectorAll('[data-chip-search]').forEach((input) => {
+        const grid = document.getElementById(input.dataset.chipSearch);
+
+        input.addEventListener('input', () => {
+            const query = input.value.trim().toLowerCase();
+
+            getChipItems(grid).forEach((item) => {
+                const label = item.textContent.trim().toLowerCase();
+                item.classList.toggle('is-hidden', query && !label.includes(query));
+            });
+        });
+    });
+
+    document.querySelectorAll('[data-clear-chip-search]').forEach((button) => {
+        button.addEventListener('click', () => {
+            const input = document.querySelector(`[data-chip-search="${button.dataset.clearChipSearch}"]`);
+            input.value = '';
+            input.dispatchEvent(new Event('input'));
+        });
+    });
+
+    const addPanel = document.querySelector('[data-ingredient-add-panel]');
+    const openAddButton = document.querySelector('[data-open-ingredient-add]');
+    const saveButton = document.querySelector('[data-save-ingredient-url]');
+    const nameEnInput = document.querySelector('[data-ingredient-name-en]');
+    const nameTrInput = document.querySelector('[data-ingredient-name-tr]');
+    const ingredientsGrid = document.querySelector('[data-ingredients-grid]');
+
+    openAddButton.addEventListener('click', () => {
+        addPanel.classList.toggle('is-open');
+        nameEnInput.focus();
+    });
+
+    saveButton.addEventListener('click', async () => {
+        const formData = new FormData();
+        formData.append('name_en', nameEnInput.value.trim());
+        formData.append('name_tr', nameTrInput.value.trim());
+
+        const response = await fetch(saveButton.dataset.saveIngredientUrl, {
+            method: 'POST',
+            headers: {
+                'X-CSRFToken': getCookie('csrftoken'),
+                'X-Requested-With': 'XMLHttpRequest'
+            },
+            body: formData
+        });
+
+        const data = await response.json();
+
+        if (!response.ok) {
+            alert(data.error || 'Ingredient could not be added.');
+            return;
+        }
+
+        const wrapper = document.createElement('div');
+        const label = document.createElement('label');
+        const checkbox = document.createElement('input');
+
+        checkbox.type = 'checkbox';
+        checkbox.name = 'ingredients';
+        checkbox.value = data.id;
+        checkbox.checked = true;
+
+        label.appendChild(checkbox);
+        label.append(` ${data.label}`);
+        wrapper.appendChild(label);
+        ingredientsGrid.appendChild(wrapper);
+
+        nameEnInput.value = '';
+        nameTrInput.value = '';
+        addPanel.classList.remove('is-open');
+    });
+</script>
+
+{% endblock %}

@@ -1,0 +1,53 @@
+{% extends 'base.html' %}
+
+{% block content %}
+
+<div class="mb-5">
+    <p class="text-warning fw-bold mb-2">Wishlist</p>
+    <h1 class="fw-bold display-5">{% if is_turkish %}Favorileriniz{% else %}Your Favorites{% endif %}</h1>
+    <p class="text-secondary fs-5">{% if is_turkish %}Sevdiğiniz restoranlardan kaydettiğiniz lezzetler.{% else %}Saved dishes from restaurants you love.{% endif %}</p>
+</div>
+
+<div class="row g-4">
+    {% for favorite in favorites %}
+        <div class="col-lg-4 col-md-6">
+            <div class="menu-card">
+                <div class="image-wrapper">
+                    <img src="{{ favorite.menu_item.image.url }}"
+                         class="food-image"
+                         alt="{{ favorite.menu_item.title }}">
+                </div>
+                <div class="mt-3">
+                    <h3 class="fw-bold">
+                        {% if is_turkish %}
+                            {{ favorite.menu_item.title_tr|default:favorite.menu_item.title }}
+                        {% else %}
+                            {{ favorite.menu_item.title_en|default:favorite.menu_item.title }}
+                        {% endif %}
+                    </h3>
+                    <p class="text-secondary">
+                        {% if is_turkish %}
+                            {{ favorite.menu_item.restaurant.name_tr|default:favorite.menu_item.restaurant.name }}
+                        {% else %}
+                            {{ favorite.menu_item.restaurant.name_en|default:favorite.menu_item.restaurant.name }}
+                        {% endif %}
+                    </p>
+                    <div class="d-flex justify-content-between align-items-center">
+                        <span class="text-warning fw-bold fs-4">₺{{ favorite.menu_item.price }}</span>
+                        <a href="{% url 'restaurant_detail' favorite.menu_item.restaurant.slug %}"
+                           class="btn btn-outline-warning rounded-pill px-3">{% if is_turkish %}Menü{% else %}View Menu{% endif %}</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    {% empty %}
+        <div class="col-12">
+            <div class="dashboard-card p-5 text-center">
+                <h3 class="fw-bold">{% if is_turkish %}Henüz favori yok{% else %}No favorites yet{% endif %}</h3>
+                <p class="text-secondary mb-0">{% if is_turkish %}Bir restoran menüsü açıp kalp ikonuna dokunun.{% else %}Open a restaurant menu and tap the heart icon.{% endif %}</p>
+            </div>
+        </div>
+    {% endfor %}
+</div>
+
+{% endblock %}

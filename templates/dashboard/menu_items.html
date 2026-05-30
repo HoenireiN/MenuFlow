@@ -1,0 +1,180 @@
+{% extends 'dashboard/base_dashboard.html' %}
+
+{% block dashboard_content %}
+
+<div class="d-flex justify-content-between align-items-start flex-wrap gap-3 mb-4">
+    <div>
+        <h1 class="fw-bold">Menu Items</h1>
+        <p class="text-secondary mb-0">Create, edit, delete and update availability.</p>
+    </div>
+
+    <a href="{% url 'menu_item_create' %}{% if filters.venue %}?venue={{ filters.venue }}{% endif %}"
+       class="btn btn-warning rounded-pill px-4 fw-bold">Add Item</a>
+</div>
+
+<form method="GET"
+      class="dashboard-card p-3 p-md-4 mb-4">
+    <div class="row g-3 align-items-end">
+        <div class="col-lg-2 col-md-6">
+            <label class="form-label text-secondary small">Venue</label>
+            <select name="venue"
+                    class="form-select bg-dark text-white border-secondary">
+                <option value="">All venues</option>
+                {% for venue in venues %}
+                    <option value="{{ venue.id }}"
+                            {% if filters.venue == venue.id|stringformat:'s' %}selected{% endif %}>
+                        {{ venue.name }}
+                    </option>
+                {% endfor %}
+            </select>
+        </div>
+
+        <div class="col-lg-2 col-md-6">
+            <label class="form-label text-secondary small">Search</label>
+            <input type="text"
+                   name="search"
+                   value="{{ filters.search }}"
+                   class="form-control bg-dark text-white border-secondary"
+                   placeholder="Burger, pizza, steak...">
+        </div>
+
+        <div class="col-lg-2 col-md-6">
+            <label class="form-label text-secondary small">Category</label>
+            <select name="category"
+                    class="form-select bg-dark text-white border-secondary">
+                <option value="">All categories</option>
+                {% for category in categories %}
+                    <option value="{{ category.id }}"
+                            {% if filters.category == category.id|stringformat:'s' %}selected{% endif %}>
+                        {{ category.restaurant.name }} / {{ category.name }}
+                    </option>
+                {% endfor %}
+            </select>
+        </div>
+
+        <div class="col-lg-2 col-md-6">
+            <label class="form-label text-secondary small">Availability</label>
+            <select name="availability"
+                    class="form-select bg-dark text-white border-secondary">
+                <option value="">All</option>
+                <option value="available" {% if filters.availability == 'available' %}selected{% endif %}>Available</option>
+                <option value="sold_out" {% if filters.availability == 'sold_out' %}selected{% endif %}>Sold Out</option>
+            </select>
+        </div>
+
+        <div class="col-lg-2 col-md-6">
+            <label class="form-label text-secondary small">Featured</label>
+            <select name="featured"
+                    class="form-select bg-dark text-white border-secondary">
+                <option value="">All</option>
+                <option value="featured" {% if filters.featured == 'featured' %}selected{% endif %}>Featured</option>
+                <option value="standard" {% if filters.featured == 'standard' %}selected{% endif %}>Standard</option>
+            </select>
+        </div>
+
+        <div class="col-lg-1 col-md-6">
+            <label class="form-label text-secondary small">Image</label>
+            <select name="image"
+                    class="form-select bg-dark text-white border-secondary">
+                <option value="">All</option>
+                <option value="custom" {% if filters.image == 'custom' %}selected{% endif %}>Custom</option>
+                <option value="missing" {% if filters.image == 'missing' %}selected{% endif %}>Missing</option>
+            </select>
+        </div>
+
+        <div class="col-lg-2 col-md-6">
+            <label class="form-label text-secondary small">Sort</label>
+            <select name="sort"
+                    class="form-select bg-dark text-white border-secondary">
+                <option value="category" {% if filters.sort == 'category' %}selected{% endif %}>Category order</option>
+                <option value="title" {% if filters.sort == 'title' %}selected{% endif %}>Title A-Z</option>
+                <option value="price_asc" {% if filters.sort == 'price_asc' %}selected{% endif %}>Price low-high</option>
+                <option value="price_desc" {% if filters.sort == 'price_desc' %}selected{% endif %}>Price high-low</option>
+                <option value="prep_asc" {% if filters.sort == 'prep_asc' %}selected{% endif %}>Prep fastest</option>
+                <option value="prep_desc" {% if filters.sort == 'prep_desc' %}selected{% endif %}>Prep slowest</option>
+                <option value="newest" {% if filters.sort == 'newest' %}selected{% endif %}>Newest</option>
+                <option value="oldest" {% if filters.sort == 'oldest' %}selected{% endif %}>Oldest</option>
+            </select>
+        </div>
+
+        <div class="col-12 d-flex gap-2 flex-wrap">
+            <button type="submit"
+                    class="btn btn-warning rounded-pill px-4 fw-bold">Apply Filters</button>
+            <a href="{% url 'dashboard_menu_items' %}"
+               class="btn btn-outline-secondary rounded-pill px-4">Reset</a>
+            <span class="text-secondary small align-self-center">{{ items|length }} items shown</span>
+        </div>
+    </div>
+</form>
+
+<div class="dashboard-card p-4">
+    <div class="table-responsive">
+        <table class="table table-dark table-hover align-middle mb-0">
+            <thead>
+                <tr>
+                    <th>Item</th>
+                    <th>Venue</th>
+                    <th>Category</th>
+                    <th>Price</th>
+                    <th>Availability</th>
+                    <th class="text-end">Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for item in items %}
+                    <tr>
+                        <td>
+                            <div class="fw-bold">{{ item.title }}</div>
+                            <div class="text-secondary small">{{ item.allergens.count }} tags</div>
+                        </td>
+                        <td>{{ item.restaurant.name }}</td>
+                        <td>{{ item.category.name }}</td>
+                        <td>₺{{ item.price }}</td>
+                        <td>
+                            <button type="button"
+                                    class="availability-toggle {% if item.is_available %}is-available{% else %}is-sold-out{% endif %}"
+                                    data-toggle-url="{% url 'toggle_availability' item.id %}">
+                                {% if item.is_available %}Available{% else %}Sold Out{% endif %}
+                            </button>
+                        </td>
+                        <td class="text-end">
+                            <a href="{% url 'menu_item_edit' item.id %}"
+                               class="btn btn-sm btn-outline-warning rounded-pill px-3">Edit</a>
+                            <a href="{% url 'menu_item_delete' item.id %}"
+                               class="btn btn-sm btn-outline-danger rounded-pill px-3">Delete</a>
+                        </td>
+                    </tr>
+                {% empty %}
+                    <tr><td colspan="6" class="text-secondary">No menu items yet.</td></tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+{% endblock %}
+
+{% block dashboard_scripts %}
+
+<script>
+    document.querySelectorAll('[data-toggle-url]').forEach((button) => {
+        button.addEventListener('click', async () => {
+            const response = await fetch(button.dataset.toggleUrl, {
+                method: 'POST',
+                headers: {
+                    'X-CSRFToken': getCookie('csrftoken'),
+                    'X-Requested-With': 'XMLHttpRequest'
+                }
+            });
+
+            if (!response.ok) return;
+
+            const data = await response.json();
+            button.textContent = data.label;
+            button.classList.toggle('is-available', data.is_available);
+            button.classList.toggle('is-sold-out', !data.is_available);
+        });
+    });
+</script>
+
+{% endblock %}

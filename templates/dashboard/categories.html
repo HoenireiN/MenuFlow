@@ -1,0 +1,46 @@
+{% extends 'dashboard/base_dashboard.html' %}
+{% load crispy_forms_tags %}
+
+{% block dashboard_content %}
+
+<div class="row g-4">
+    <div class="col-lg-5">
+        <div class="dashboard-card p-4">
+            <h2 class="fw-bold mb-3">Add Category</h2>
+            <p class="text-secondary small">Choose the venue this category belongs to.</p>
+            <form method="POST">
+                {% csrf_token %}
+                {{ form|crispy }}
+                <button type="submit"
+                        class="btn btn-warning rounded-pill px-4 fw-bold mt-3">Add Category</button>
+            </form>
+        </div>
+    </div>
+
+    <div class="col-lg-7">
+        <div class="dashboard-card p-4">
+            <h2 class="fw-bold mb-3">Categories</h2>
+
+            {% for category in categories %}
+                <div class="d-flex justify-content-between align-items-center py-3 border-bottom border-secondary">
+                    <div>
+                        <div class="fw-bold">{{ category.name }}</div>
+                        <div class="text-warning small">{{ category.restaurant.name }}</div>
+                        <div class="text-secondary small">{{ category.description|default:'No description' }}</div>
+                    </div>
+
+                    <form method="POST"
+                          action="{% url 'category_delete' category.id %}">
+                        {% csrf_token %}
+                        <button type="submit"
+                                class="btn btn-sm btn-outline-danger rounded-pill px-3">Delete</button>
+                    </form>
+                </div>
+            {% empty %}
+                <p class="text-secondary mb-0">No categories yet.</p>
+            {% endfor %}
+        </div>
+    </div>
+</div>
+
+{% endblock %}

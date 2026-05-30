@@ -1,0 +1,318 @@
+{% extends 'base.html' %}
+
+{% block content %}
+
+<style>
+    .hotel-map-hero {
+        position: relative;
+        overflow: hidden;
+        padding: clamp(24px, 4vw, 44px);
+        border-radius: 34px;
+        background:
+            radial-gradient(circle at 18% 12%, rgba(245,158,11,0.22), transparent 34%),
+            radial-gradient(circle at 78% 22%, rgba(56,189,248,0.16), transparent 30%),
+            linear-gradient(145deg, rgba(15,23,42,0.98), rgba(17,24,39,0.92));
+        border: 1px solid rgba(255,255,255,0.08);
+        box-shadow: 0 28px 80px rgba(0,0,0,0.42);
+    }
+
+    .hotel-map-shell {
+        position: relative;
+        border-radius: 34px;
+        overflow: hidden;
+        background: rgba(2,6,23,0.55);
+        border: 1px solid rgba(255,255,255,0.1);
+        box-shadow:
+            0 30px 90px rgba(0,0,0,0.55),
+            0 0 0 1px rgba(245,158,11,0.08),
+            inset 0 1px 0 rgba(255,255,255,0.08);
+    }
+
+    .hotel-map-shell::after {
+        content: '';
+        position: absolute;
+        inset: 0;
+        pointer-events: none;
+        background:
+            radial-gradient(circle at center, transparent 48%, rgba(2,6,23,0.24) 100%),
+            linear-gradient(180deg, rgba(255,255,255,0.04), transparent 32%);
+    }
+
+    .hotel-map-image {
+        width: 100%;
+        display: block;
+        transform: scale(1.002);
+        transition: transform 0.7s ease, filter 0.7s ease;
+    }
+
+    .hotel-map-shell:hover .hotel-map-image {
+        transform: scale(1.025);
+        filter: saturate(1.07) contrast(1.03);
+    }
+
+    .venue-hotspot {
+        position: absolute;
+        left: var(--x);
+        top: var(--y);
+        z-index: 2;
+        transform: translate(-50%, -50%);
+        display: inline-flex;
+        align-items: center;
+        gap: 10px;
+        min-width: 178px;
+        padding: 10px 12px 10px 10px;
+        color: #f8fafc;
+        text-decoration: none;
+        border-radius: 999px;
+        background: rgba(15,23,42,0.78);
+        border: 1px solid rgba(255,255,255,0.22);
+        box-shadow:
+            0 16px 36px rgba(0,0,0,0.35),
+            0 0 24px rgba(245,158,11,0.15),
+            inset 0 1px 0 rgba(255,255,255,0.16);
+        backdrop-filter: blur(16px);
+        transition: transform 0.22s ease, border-color 0.22s ease, box-shadow 0.22s ease, background 0.22s ease;
+    }
+
+    .venue-hotspot:hover {
+        color: #ffffff;
+        transform: translate(-50%, -50%) translateY(-5px) scale(1.035);
+        border-color: rgba(245,158,11,0.75);
+        background: rgba(17,24,39,0.92);
+        box-shadow:
+            0 22px 46px rgba(0,0,0,0.42),
+            0 0 34px rgba(245,158,11,0.32),
+            inset 0 1px 0 rgba(255,255,255,0.2);
+    }
+
+    .venue-hotspot::before {
+        content: '';
+        position: absolute;
+        inset: -10px;
+        border-radius: 999px;
+        border: 1px solid rgba(245,158,11,0.2);
+        opacity: 0;
+        transform: scale(0.8);
+        transition: opacity 0.22s ease, transform 0.22s ease;
+    }
+
+    .venue-hotspot:hover::before {
+        opacity: 1;
+        transform: scale(1);
+    }
+
+    .venue-hotspot-dot {
+        width: 34px;
+        height: 34px;
+        flex: 0 0 auto;
+        border-radius: 50%;
+        background:
+            radial-gradient(circle at 35% 30%, #fff7ed, #f59e0b 42%, #92400e 100%);
+        box-shadow: 0 0 0 7px rgba(245,158,11,0.16), 0 0 22px rgba(245,158,11,0.5);
+    }
+
+    .venue-hotspot-title {
+        display: block;
+        font-weight: 900;
+        font-size: 0.92rem;
+        line-height: 1.05;
+        white-space: nowrap;
+    }
+
+    .venue-hotspot-meta {
+        display: flex;
+        align-items: center;
+        gap: 7px;
+        margin-top: 3px;
+        font-size: 0.68rem;
+        font-weight: 900;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+    }
+
+    .map-status-badge {
+        padding: 3px 8px;
+        border-radius: 999px;
+        line-height: 1;
+    }
+
+    .map-status-badge.is-open {
+        color: #052e16;
+        background: #86efac;
+        box-shadow: 0 0 18px rgba(134,239,172,0.28);
+    }
+
+    .map-status-badge.is-closed {
+        color: #450a0a;
+        background: #fca5a5;
+        box-shadow: 0 0 18px rgba(252,165,165,0.22);
+    }
+
+    .map-glass-panel {
+        padding: 18px;
+        border-radius: 24px;
+        background: rgba(15,23,42,0.62);
+        border: 1px solid rgba(255,255,255,0.08);
+        box-shadow: 0 18px 45px rgba(0,0,0,0.26);
+        backdrop-filter: blur(16px);
+    }
+
+    @media (max-width: 768px) {
+        .hotel-map-hero {
+            padding: 22px;
+            border-radius: 26px;
+        }
+
+        .hotel-map-shell {
+            border-radius: 24px;
+        }
+
+        .venue-hotspot {
+            min-width: 0;
+            padding: 9px;
+            gap: 7px;
+        }
+
+        .venue-hotspot-dot {
+            width: 26px;
+            height: 26px;
+            box-shadow: 0 0 0 5px rgba(245,158,11,0.15), 0 0 18px rgba(245,158,11,0.42);
+        }
+
+        .venue-hotspot-title {
+            font-size: 0.72rem;
+            max-width: 92px;
+            white-space: normal;
+        }
+
+        .venue-hotspot-meta {
+            font-size: 0.58rem;
+        }
+    }
+
+    @media (max-width: 520px) {
+        .venue-hotspot {
+            transform: translate(-50%, -50%) scale(0.86);
+            transform-origin: center;
+        }
+
+        .venue-hotspot:hover {
+            transform: translate(-50%, -50%) scale(0.9);
+        }
+    }
+</style>
+
+<div class="hotel-map-hero mb-5">
+    <div class="row g-4 align-items-center mb-4">
+        <div class="col-lg-8">
+            <span class="category-kicker">{% if is_turkish %}Dijital Concierge{% else %}Digital Concierge{% endif %}</span>
+            <h1 class="fw-bold display-4 mb-3">
+                {% if is_turkish %}Resort Haritasından Mekan Seçin{% else %}Choose a Venue from the Resort Map{% endif %}
+            </h1>
+            <p class="text-secondary fs-5 mb-0">
+                {% if is_turkish %}Ana restoran, plaj barı ve lobi kafeyi interaktif otel haritası üzerinden keşfedin.{% else %}Explore the main restaurant, beach bar and lobby cafe through an interactive luxury hotel map.{% endif %}
+            </p>
+        </div>
+        <div class="col-lg-4">
+            <div class="map-glass-panel">
+                <div class="text-warning fw-bold small mb-1">{% if is_turkish %}Canlı Durum{% else %}Live Venue Status{% endif %}</div>
+                <div class="text-secondary small">
+                    {% if is_turkish %}Haritadaki işaretlere dokunarak menüye geçin.{% else %}Tap a glowing marker on the map to open its menu.{% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="hotel-map-shell">
+        <img src="/media/hotel_map.png"
+             class="hotel-map-image"
+             alt="Hotel resort venue map">
+
+        {% for hotspot in venue_hotspots %}
+            {% if hotspot.venue %}
+                <a href="{% url 'restaurant_detail' hotspot.venue.slug %}"
+                   class="venue-hotspot venue-hotspot--{{ hotspot.align }}"
+                   style="--x: {{ hotspot.x }}%; --y: {{ hotspot.y }}%;">
+                    <span class="venue-hotspot-dot"></span>
+                    <span>
+                        <span class="venue-hotspot-title">
+                            {% if is_turkish %}{{ hotspot.label_tr }}{% else %}{{ hotspot.label_en }}{% endif %}
+                        </span>
+                        <span class="venue-hotspot-meta">
+                            {% if hotspot.venue.is_open_now %}
+                                <span class="map-status-badge is-open">{% if is_turkish %}Açık{% else %}Open{% endif %}</span>
+                            {% else %}
+                                <span class="map-status-badge is-closed">{% if is_turkish %}Kapalı{% else %}Closed{% endif %}</span>
+                            {% endif %}
+                        </span>
+                    </span>
+                </a>
+            {% endif %}
+        {% endfor %}
+    </div>
+</div>
+
+<div class="d-flex justify-content-between align-items-end flex-wrap gap-3 mb-4">
+    <div>
+        <span class="category-kicker">{% if is_turkish %}Mekanlar{% else %}Venues{% endif %}</span>
+        <h2 class="fw-bold mb-0">{% if is_turkish %}Tüm Yeme İçme Noktaları{% else %}All Dining Destinations{% endif %}</h2>
+    </div>
+</div>
+
+<div class="row">
+
+{% for restaurant in restaurants %}
+
+<div class="col-md-4 mb-4">
+
+    <div class="menu-card">
+
+        {% if restaurant.logo %}
+            <div class="image-wrapper">
+                <img src="{{ restaurant.logo.url }}"
+                     class="food-image is-contain"
+                     alt="{{ restaurant.name }}">
+            </div>
+        {% endif %}
+
+        <h3 class="mt-3">
+            {% if is_turkish %}
+                {{ restaurant.name_tr|default:restaurant.name }}
+            {% else %}
+                {{ restaurant.name_en|default:restaurant.name }}
+            {% endif %}
+        </h3>
+
+        <div class="d-flex flex-wrap gap-2 mb-3">
+            <span class="badge bg-dark border border-secondary rounded-pill px-3 py-2">{{ restaurant.get_venue_type_display }}</span>
+            {% if restaurant.is_open_now %}
+                <span class="badge bg-success rounded-pill px-3 py-2">{% if is_turkish %}Açık{% else %}Open{% endif %}</span>
+            {% else %}
+                <span class="badge bg-danger rounded-pill px-3 py-2">{% if is_turkish %}Kapalı{% else %}Closed{% endif %}</span>
+            {% endif %}
+        </div>
+
+        <p>
+            {% if is_turkish %}
+                {{ restaurant.description_tr|default:restaurant.description }}
+            {% else %}
+                {{ restaurant.description_en|default:restaurant.description }}
+            {% endif %}
+        </p>
+
+        <a href="{% url 'restaurant_detail' restaurant.slug %}"
+           class="btn btn-warning">
+
+            {% if is_turkish %}Mekanı Aç{% else %}Open Venue{% endif %}
+
+        </a>
+
+    </div>
+
+</div>
+
+{% endfor %}
+
+</div>
+
+{% endblock %}

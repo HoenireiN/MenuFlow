@@ -74,6 +74,15 @@ python manage.py runserver
 - API root: `http://127.0.0.1:8000/api/`
 - Admin: `http://127.0.0.1:8000/admin/`
 
+## Live Demo
+
+- Live site: `https://menuflow-pwda.onrender.com/`
+- Live API: `https://menuflow-pwda.onrender.com/api/`
+- Demo owner username: `demo_owner`
+- Demo owner password: `DemoOwner123!`
+
+The Render free instance may sleep after inactivity. The first request can take up to a minute while the service wakes up.
+
 ## REST API
 
 The API is read-only and public for menu browsing integrations.
